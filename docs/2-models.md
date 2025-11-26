@@ -1,220 +1,125 @@
-# 5. Modelagem de Banco de Dados (Supabase)
+# 2. Modelagem de Dados (Supabase)
 
-Esta seção define a modelagem inicial do banco de dados no Supabase para o gerenciador de projetos e tarefas.  
-O objetivo é permitir que empresas organizem **clientes, projetos e tarefas**, mantendo vínculo entre essas informações e registrando histórico das alterações.
+Baseada no schema atual (tipos em `types/database.ts`).
 
-A modelagem considera:
+## 2.1 Entidades Principais
+- `profiles`
+- `organizations`
+- `organization_members`
+- `clients`
+- `projects`
+- `project_members`
+- `tasks`
+- `task_assignees`
+- `task_activity_log`
 
-- PostgreSQL (Supabase)
-- Multi-tenant com isolamento por organização
-- Acesso controlado por membership
-- Registro de logs de atividades das tarefas
+## 2.2 Tabelas e Colunas (NOT NULL explícito)
 
----
+### profiles
+- **id (uuid, PK, NOT NULL)**: igual a `auth.users.id`
+- full_name (text, null)
+- avatar_url (text, null)
+- created_at (timestamptz, NOT NULL)
+- updated_at (timestamptz, NOT NULL)
 
-## 5.1 Visão Geral das Entidades
+### organizations
+- **id (uuid, PK, NOT NULL)**
+- name (text, NOT NULL)
+- cnpj (text, null)
+- address (text, null)
+- phone (text, null)
+- email (text, null)
+- created_by (uuid, NOT NULL, FK → profiles.id)
+- created_at (timestamptz, NOT NULL)
+- updated_at (timestamptz, NOT NULL)
 
-Entidades principais:
+### organization_members
+- **organization_id (uuid, PK1, NOT NULL, FK → organizations.id)**
+- **user_id (uuid, PK2, NOT NULL, FK → profiles.id)**
+- role (text, NOT NULL) — `owner` | `admin` | `member`
+- created_at (timestamptz, NOT NULL)
 
-- **profiles** — dados complementares dos usuários autenticados  
-- **organizations** — empresas que usam o sistema  
-- **organization_members** — vínculo entre usuários e organizações  
-- **clients** — clientes atendidos pela organização  
-- **projects** — projetos vinculados a um cliente  
-- **project_members** — usuários participantes de um projeto  
-- **tasks** — tarefas vinculadas a um projeto  
-- **task_assignees** — responsáveis por cada tarefa  
-- **task_activity_log** — histórico de alterações das tarefas  
+### clients
+- **id (uuid, PK, NOT NULL)**
+- organization_id (uuid, NOT NULL, FK → organizations.id)
+- name (text, NOT NULL)
+- contact_name (text, null)
+- contact_email (text, null)
+- contact_phone (text, null)
+- cnpj (text, null)
+- address (text, null)
+- notes (text, null)
+- created_by (uuid, NOT NULL, FK → profiles.id)
+- created_at (timestamptz, NOT NULL)
+- updated_at (timestamptz, NOT NULL)
 
----
+### projects
+- **id (uuid, PK, NOT NULL)**
+- organization_id (uuid, NOT NULL, FK → organizations.id)
+- client_id (uuid, NOT NULL, FK → clients.id)
+- name (text, NOT NULL)
+- description (text, null)
+- status (text, NOT NULL) — `active` (atual padrão), outros estados podem ser adicionados
+- start_date (date, null)
+- due_date (date, null)
+- created_by (uuid, NOT NULL, FK → profiles.id)
+- created_at (timestamptz, NOT NULL)
+- updated_at (timestamptz, NOT NULL)
 
-## 5.2 Tabelas e Colunas
+### project_members
+- **project_id (uuid, PK1, NOT NULL, FK → projects.id)**
+- **user_id (uuid, PK2, NOT NULL, FK → profiles.id)**
+- role (text, NOT NULL) — `owner`, `member`
+- created_at (timestamptz, NOT NULL)
 
-### 5.2.1 `profiles`
+### tasks
+- **id (uuid, PK, NOT NULL)**
+- project_id (uuid, NOT NULL, FK → projects.id)
+- title (text, NOT NULL)
+- description (text, null)
+- status (text, NOT NULL) — `to_start` | `in_progress` | `pending` | `done`
+- visibility (text, NOT NULL) — `published` | `archived` | `trashed`
+- due_date (date, null)
+- start_date (date, null)
+- created_by (uuid, NOT NULL, FK → profiles.id)
+- created_at (timestamptz, NOT NULL)
+- updated_at (timestamptz, NOT NULL)
 
-Dados complementares de cada usuário autenticado.
+### task_assignees
+- **task_id (uuid, PK1, NOT NULL, FK → tasks.id)**
+- **user_id (uuid, PK2, NOT NULL, FK → profiles.id)**
+- created_at (timestamptz, NOT NULL)
 
-| Coluna        | Tipo        | Descrição                                  |
-|---------------|-------------|--------------------------------------------|
-| id            | uuid        | PK — igual ao `auth.users.id`              |
-| full_name     | text        | Nome completo                              |
-| avatar_url    | text        | URL do avatar                              |
-| created_at    | timestamptz | Data de criação                            |
-| updated_at    | timestamptz | Última atualização                         |
+### task_activity_log
+- **id (uuid, PK, NOT NULL)**
+- task_id (uuid, NOT NULL, FK → tasks.id)
+- user_id (uuid, NOT NULL, FK → profiles.id)
+- action_type (text, NOT NULL) — ex.: `STATUS_CHANGED`, `ARCHIVED`, `RESTORED`, `TRASHED`
+- from_status (text, null)
+- to_status (text, null)
+- from_due_date (date, null)
+- to_due_date (date, null)
+- description (text, null)
+- created_at (timestamptz, NOT NULL, default now())
 
----
+## 2.3 Relacionamentos e Constraints
+- Uma **organization** tem muitos **clients**, **projects** e **organization_members**.
+- Um **project** pertence a uma **organization** e a um **client**.
+- **project_members** vincula usuários (profiles) a projetos; criador do projeto entra como `owner`.
+- Uma **task** pertence a um **project**; acesso depende de membership em `project_members`.
+- **task_assignees**: usuários responsáveis por uma task (devem ser membros do projeto).
+- **task_activity_log** registra ações executadas por um usuário; visível apenas para membros do projeto.
+- PK compostas:
+  - `organization_members (organization_id, user_id)`
+  - `project_members (project_id, user_id)`
+  - `task_assignees (task_id, user_id)`
+- FKs com integridade referencial; inserções devem respeitar organização/projeto/membership.
 
-### 5.2.2 `organizations` (atualizado)
+## 2.4 Status e Visibilidade de Tasks
+- **status**: `to_start` | `in_progress` | `pending` | `done` (default: `to_start`)
+- **visibility**: `published` | `archived` | `trashed` (default: `published`)
 
-Representa uma empresa que utiliza o sistema.
-
-| Coluna         | Tipo        | Descrição                               |
-|----------------|-------------|-----------------------------------------|
-| id             | uuid        | PK                                      |
-| name           | text        | Nome da organização                     |
-| cnpj           | text        | CNPJ da organização                     |
-| address        | text        | Endereço completo                       |
-| phone          | text        | Telefone de contato                     |
-| email          | text        | E-mail de contato                       |
-| created_by     | uuid        | FK → `profiles.id`                      |
-| created_at     | timestamptz | Data de criação                         |
-| updated_at     | timestamptz | Última atualização                      |
-
----
-
-### 5.2.3 `organization_members`
-
-Vínculo entre usuários e organizações.
-
-| Coluna          | Tipo        | Descrição                                       |
-|-----------------|-------------|-------------------------------------------------|
-| organization_id | uuid        | FK → `organizations.id`                         |
-| user_id         | uuid        | FK → `profiles.id`                              |
-| role            | text        | `owner`, `admin`, `member`                      |
-| created_at      | timestamptz | Data de criação                                 |
-
-**PK composta:** `(organization_id, user_id)`
-
----
-
-### 5.2.4 `clients`
-
-Clientes pertencentes a uma organização.
-
-| Coluna         | Tipo        | Descrição                               |
-|----------------|-------------|-----------------------------------------|
-| id             | uuid        | PK                                      |
-| organization_id| uuid        | FK → `organizations.id`                 |
-| name           | text        | Nome do cliente                         |
-| cnpj           | text        | CNPJ do cliente                         |
-| address        | text        | Endereço completo do cliente            |
-| contact_name   | text        | Nome do contato principal               |
-| contact_email  | text        | E-mail do contato                       |
-| contact_phone  | text        | Telefone do contato                     |
-| notes          | text        | Observações                             |
-| created_by     | uuid        | FK → `profiles.id`                      |
-| created_at     | timestamptz | Criado em                               |
-| updated_at     | timestamptz | Atualizado em                           |
-
----
-
-### 5.2.5 `projects`
-
-Projetos vinculados a clientes.
-
-| Coluna         | Tipo        | Descrição                               |
-|----------------|-------------|-----------------------------------------|
-| id             | uuid        | PK                                      |
-| organization_id| uuid        | FK → `organizations.id`                 |
-| client_id      | uuid        | FK → `clients.id`                       |
-| name           | text        | Nome do projeto                         |
-| description    | text        | Descrição                               |
-| status         | text        | `active`, `archived`, etc.              |
-| start_date     | date        | Início                                   |
-| due_date       | date        | Prazo                                    |
-| created_by     | uuid        | Autor                                    |
-| created_at     | timestamptz | Criado em                                |
-| updated_at     | timestamptz | Atualizado em                            |
-
----
-
-### 5.2.6 `project_members`
-
-Vínculo entre usuários e projetos.
-
-| Coluna     | Tipo        | Descrição                           |
-|------------|-------------|-------------------------------------|
-| project_id | uuid        | FK → `projects.id`                  |
-| user_id    | uuid        | FK → `profiles.id`                  |
-| role       | text        | `owner`, `member`                   |
-| created_at | timestamptz | Data de criação                     |
-
-**PK composta:** `(project_id, user_id)`
-
----
-
-### 5.2.7 `tasks`
-
-Tarefas vinculadas a um projeto.
-
-#### Status de execução:
-- `to_start`
-- `in_progress`
-- `pending`
-- `done`
-
-#### Status de visibilidade (atualizado):
-- `published`
-- `archived`
-- `trashed`
-
-| Coluna        | Tipo        | Descrição                         |
-|---------------|-------------|-----------------------------------|
-| id            | uuid        | PK                                |
-| project_id    | uuid        | FK → `projects.id`                |
-| title         | text        | Título da tarefa                  |
-| description   | text        | Descrição                         |
-| status        | text        | Status de execução                |
-| visibility    | text        | `published`, `archived`, `trashed`|
-| due_date      | date        | Prazo                             |
-| start_date    | date        | Início                            |
-| created_by    | uuid        | FK → `profiles.id`                |
-| created_at    | timestamptz | Criado em                         |
-| updated_at    | timestamptz | Atualizado em                     |
-
----
-
-### 5.2.8 `task_assignees`
-
-Responsáveis atribuídos a cada tarefa.
-
-| Coluna     | Tipo        | Descrição                           |
-|------------|-------------|-------------------------------------|
-| task_id    | uuid        | FK → `tasks.id`                     |
-| user_id    | uuid        | FK → `profiles.id`                  |
-| created_at | timestamptz | Data de atribuição                  |
-
-**PK composta:** `(task_id, user_id)`
-
----
-
-### 5.2.9 `task_activity_log`
-
-Histórico de alterações de tarefas.
-
-| Coluna         | Tipo        | Descrição                                 |
-|----------------|-------------|-------------------------------------------|
-| id             | uuid        | PK                                        |
-| task_id        | uuid        | FK → `tasks.id`                           |
-| user_id        | uuid        | FK → `profiles.id`                        |
-| action_type    | text        | Tipo da ação                              |
-| from_status    | text        | Status anterior                           |
-| to_status      | text        | Novo status                               |
-| from_due_date  | date        | Prazo anterior                            |
-| to_due_date    | date        | Novo prazo                                |
-| description    | text        | Descrição da mudança                      |
-| created_at     | timestamptz | Data da ação                              |
-
----
-
-## 5.3 Resumo dos Relacionamentos
-
-- Uma **organization** tem muitos **clients**, **projects** e **users**  
-- Um **client** pertence a apenas **uma organization**  
-- Um **project** pertence a um **client**  
-- O acesso ao projeto é controlado por **project_members**  
-- Uma **task** pertence a um **project** e pode ter vários responsáveis  
-- Cada tarefa possui múltiplos registros em `task_activity_log`  
-
----
-
-## 5.4 Observação sobre Multi-Tenancy
-
-A tabela `organization_members` é a base do isolamento de dados no modelo SaaS.  
-Combinada com RLS:
-
-- O usuário só vê organizações onde é membro  
-- Só vê clientes e projetos dessa organização  
-- E, para maior restrição, só vê projetos onde foi adicionado via `project_members`
-
-Essa estrutura garante que **cada usuário só visualize seus próprios dados** ou dados de projetos onde foi explicitamente convidado.
+## 2.5 Observações de Negócio
+- Usuário que cria um projeto é adicionado automaticamente em `project_members` como `owner`.
+- Assignees validados contra `project_members`.
+- Logs usam `action_type` (não `action`) e guardam estados de status e due_date quando aplicável.

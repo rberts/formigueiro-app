@@ -1,206 +1,91 @@
-# 8. Especificação das Rotas da API (Next.js /app/api)
+# 4. Rotas da API (Next.js /app/api)
 
-> Observação:  
-> A API é uma camada opcional, porém recomendada para concentrar lógica de negócio mais complexa.  
-> Operações simples podem ser feitas diretamente com o Supabase Client no front-end.  
-> Operações que envolvem múltiplos passos devem passar pela API.
+Formato padrão:
+- Sucesso: `{ "success": true, "data": ... }`
+- Erro: `{ "success": false, "error": { "code", "message", "details" } }`
 
----
+Ordem de validação nas rotas protegidas:
+1) Usuário autenticado (`auth.getUser`)
+2) Organização ativa via `getActiveOrganizationForUser`
+3) Projeto pertence à organização (quando aplicável)
+4) Tarefa pertence ao projeto/organização (quando aplicável)
 
-# 8.1 Convenções Gerais da API
+## 4.1 Clients
+### GET `/api/clients`
+- Lista clientes da organização ativa.
 
-### Formato de resposta bem-sucedida
-```json
-{
-  "success": true,
-  "data": {},
-  "error": null
-}
-```
+### POST `/api/clients`
+- Body: `{ name: string, email?, phone?, cnpj?, address? }`
+- Cria cliente na organização ativa.
 
-### Formato de resposta com erro
-```json
-{
-  "success": false,
-  "data": null,
-  "error": {
-    "code": "VALIDATION_ERROR",
-    "message": "Descrição do erro"
-  }
-}
-```
+### GET `/api/clients/:id`
+- Detalhe do cliente (org ativa).
 
----
+### PUT `/api/clients/:id`
+- Body opcional: `{ name?, email?, phone?, cnpj?, address? }`
 
-# 8.2 Rotas de Clientes (`/api/clients`)
+### DELETE `/api/clients/:id`
+- Remove cliente da org ativa.
 
-## 8.2.1 Listar clientes  
-**GET** `/api/clients`
+## 4.2 Projects
+### GET `/api/projects`
+- Lista projetos da org ativa.
 
-Query params:  
-- `search` (opcional)
+### POST `/api/projects`
+- Body: `{ client_id, name, description?, start_date?, due_date? }`
+- Cria projeto (status `active`, `created_by` = usuário) e adiciona criador em `project_members` como `owner`.
 
----
+### GET `/api/projects/:id`
+- Detalhe do projeto da org ativa (precisa ser membro do projeto).
 
-## 8.2.2 Criar cliente  
-**POST** `/api/clients`
+### PUT `/api/projects/:id`
+- Body opcional: `{ client_id?, name?, description?, status?, start_date?, due_date? }`
 
-Body:
-```json
-{
-  "name": "Cliente X",
-  "contact_name": "Fulano",
-  "contact_email": "email@cliente.com",
-  "contact_phone": "+55...",
-  "notes": "Observações"
-}
-```
+### DELETE `/api/projects/:id`
+- Remove projeto da org ativa (membro necessário).
 
----
+### Project Members
+#### GET `/api/projects/:id/members`
+- Lista membros do projeto (user_id, role, perfil).
 
-## 8.2.3 Atualizar cliente  
-**PUT** `/api/clients/:id`
+#### POST `/api/projects/:id/members`
+- Body: `{ user_id, role?=member }`
+- Valida que usuário alvo é membro da organização; cria em `project_members` (trata duplicidade).
 
-Body:
-```json
-{
-  "name": "Novo nome",
-  "contact_name": "Novo contato",
-  "contact_email": "novoemail@cliente.com",
-  "contact_phone": "+55...",
-  "notes": "Texto atualizado"
-}
-```
+#### DELETE `/api/projects/:id/members/:userId`
+- Remove vínculo `project_members`.
 
----
+## 4.3 Tasks
+### GET `/api/tasks?project_id=...&visibility=...`
+- Lista tasks de um projeto da org ativa; visibilidade default `published`.
 
-## 8.2.4 Deletar cliente  
-**DELETE** `/api/clients/:id`
+### POST `/api/tasks`
+- Body: `{ project_id, title, description?, status?=to_start, visibility?=published, start_date?, due_date?, assignee_ids?: string[] }`
+- Valida projeto na org ativa e assignees como membros do projeto; insere em `tasks` + `task_assignees`.
 
----
+### GET `/api/tasks/:id`
+- Detalhe da task, validando projeto/org.
 
-# 8.3 Rotas de Projetos (`/api/projects`)
+### PUT `/api/tasks/:id`
+- Body opcional: `{ title?, description?, status?, visibility?, start_date?, due_date? }`
+- Atualiza task (membro do projeto requerido).
 
-## 8.3.1 Listar projetos  
-**GET** `/api/projects`
+#### Status e Visibilidade
+- POST `/api/tasks/:id/status` — Body: `{ status }`; atualiza status e registra log (`action_type=STATUS_CHANGED`).
+- POST `/api/tasks/:id/archive` — Define `visibility=archived` (se não estiver `trashed`); log `ARCHIVED`.
+- POST `/api/tasks/:id/restore` — Define `visibility=published`; log `RESTORED`.
+- POST `/api/tasks/:id/trash` — Define `visibility=trashed`; log `TRASHED`.
 
-Query params:
-- `client_id`
-- `status`
+## 4.4 Task Logs
+### GET `/api/task-logs?task_id=...`
+- Valida task na org/projeto do usuário.
+- Retorna logs ordenados por `created_at` (id, action_type, from_status, to_status, from_due_date, to_due_date, description, user_id, user_name?, created_at).
 
----
+## 4.5 Erros e RLS
+- Erros comuns: `UNAUTHORIZED`, `FORBIDDEN`, `VALIDATION_ERROR`, `NOT_FOUND`, `DB_ERROR`.
+- As rotas assumem RLS ativo: acesso condicionado a membership em organização e projeto.
 
-## 8.3.2 Criar projeto  
-**POST** `/api/projects`
-
-Body:
-```json
-{
-  "client_id": "uuid",
-  "name": "Projeto X",
-  "description": "Descrição opcional",
-  "status": "active",
-  "start_date": "2025-01-01",
-  "due_date": "2025-02-01"
-}
-```
-
----
-
-## 8.3.3 Detalhes do projeto  
-**GET** `/api/projects/:id`
-
----
-
-## 8.3.4 Atualizar projeto  
-**PUT** `/api/projects/:id`
-
----
-
-## 8.3.5 Arquivar projeto  
-**POST** `/api/projects/:id/archive`
-
----
-
-# 8.4 Rotas de Tarefas (`/api/tasks`)
-
-## 8.4.1 Listar tarefas  
-**GET** `/api/tasks?project_id=uuid&visibility=published`
-
----
-
-## 8.4.2 Criar tarefa  
-**POST** `/api/tasks`
-
-Body:
-```json
-{
-  "project_id": "uuid",
-  "title": "Criar protótipo",
-  "description": "Detalhes",
-  "status": "to_start",
-  "visibility": "published",
-  "due_date": "2025-01-25",
-  "assignees": ["uuid1", "uuid2"]
-}
-```
-
----
-
-## 8.4.3 Atualizar tarefa  
-**PUT** `/api/tasks/:id`
-
----
-
-## 8.4.4 Mudar status  
-**POST** `/api/tasks/:id/status`
-
-Body:
-```json
-{
-  "status": "done"
-}
-```
-
----
-
-## 8.4.5 Arquivar / Restaurar / Enviar para lixeira
-
-### Arquivar  
-**POST** `/api/tasks/:id/archive`
-
-### Restaurar  
-**POST** `/api/tasks/:id/restore`
-
-### Lixeira  
-**POST** `/api/tasks/:id/trash`
-
----
-
-# 8.5 Rotas de Logs de Tarefa (`/api/task-logs`)
-
-## 8.5.1 Listar logs  
-**GET** `/api/task-logs?task_id=uuid`
-
----
-
-# 8.6 Padronização de Erros
-
-### Tipos de erros
-
-- `VALIDATION_ERROR`
-- `UNAUTHORIZED`
-- `FORBIDDEN`
-- `INTERNAL_ERROR`
-
-### Exemplo:
-```json
-{
-  "success": false,
-  "data": null,
-  "error": {
-    "code": "FORBIDDEN",
-    "message": "Você não tem permissão para acessar este projeto."
-  }
-}
-```
+## 4.6 Consumo na UI
+- `/projects` usa `/api/projects` e `/api/clients`.
+- `/projects/[id]` usa `/api/tasks`, `/api/task-logs`, `/api/projects/:id/members`.
+- Componentes client: `CreateProjectForm`, `CreateTaskForm`, `TaskStatusControls`, `TaskHistory`, `AddProjectMemberForm`; todos usam `router.refresh()` após sucesso.
