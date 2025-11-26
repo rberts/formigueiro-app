@@ -121,5 +121,27 @@ export async function POST(request: Request): Promise<NextResponse<ApiSuccess<un
     );
   }
 
+  // Vincula automaticamente o criador como membro "owner" do projeto recém-criado.
+  const { error: memberError } = await supabase.from('project_members').insert({
+    project_id: data.id,
+    user_id: userData.user.id,
+    role: 'owner'
+  });
+
+  if (memberError) {
+    console.error('[POST /api/projects] supabase error (auto member):', memberError);
+    return NextResponse.json(
+      {
+        success: false,
+        error: {
+          code: 'DB_ERROR',
+          message: 'Projeto criado, mas não foi possível adicionar o criador como membro.',
+          details: { supabase_code: memberError.code, supabase_message: memberError.message, project_id: data.id }
+        }
+      },
+      { status: 500 }
+    );
+  }
+
   return NextResponse.json({ success: true, data } satisfies ApiSuccess<typeof data>, { status: 201 });
 }

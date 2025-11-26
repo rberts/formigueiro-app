@@ -1,4 +1,5 @@
 import { cookies } from 'next/headers';
+import Link from 'next/link';
 import CreateProjectForm from '../../../components/projects/create-project-form';
 
 type Project = {
@@ -98,7 +99,11 @@ const ProjectsPage = async () => {
                 <tbody className="divide-y divide-slate-800">
                   {projects.map((project) => (
                     <tr key={project.id} className="hover:bg-slate-800/40">
-                      <td className="px-4 py-3 font-medium text-slate-100">{project.name}</td>
+                      <td className="px-4 py-3 font-medium text-slate-100">
+                        <Link href={`/projects/${project.id}`} className="text-primary-300 hover:underline">
+                          {project.name}
+                        </Link>
+                      </td>
                       <td className="px-4 py-3 text-slate-300">{clientsMap.get(project.client_id) ?? '—'}</td>
                       <td className="px-4 py-3 text-slate-300">{project.status}</td>
                       <td className="px-4 py-3 text-slate-400">
