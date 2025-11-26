@@ -8,31 +8,30 @@
 - UI com TailwindCSS + shadcn/ui (componentes instalados em `components/ui`, tokens em `tailwind.config.js`).
 - Todo código em TypeScript; componentes como arrow functions.
 
-## Estrutura de pastas esperada (`src/`)
-- `app/` com `layout.tsx`, `page.tsx`, rotas (incluindo `(auth)/login`, `(auth)/register`, `dashboard/`).
-- `app/api/*/route.ts` para handlers REST (GET/POST/PUT/PATCH/DELETE).
-- `components/` dividido em `ui/`, `layout/`, `forms/`, `shared/`.
-- `lib/` com `supabase/` (`server.ts`, `client.ts`), `utils/`, `validators/`.
-- `styles/` com `globals.css`, `tailwind.css`.
+## Estrutura de pastas atual
+- `app/` (raiz, sem `src/`), com `layout.tsx`, `globals.css`, rotas `(auth)`, `(dashboard)` (incluindo `/projects`, `/clients`), e APIs em `app/api/*/route.ts`.
+- `(dashboard)/projects/[id]/` contém página de detalhes, formulários de task, controles de status e histórico, e formulário de membros.
+- `components/ui/` (shadcn: button, card, input, label, dialog, scroll-area, etc.; tokens em `app/globals.css`, tema dark em `:root`).
+- `lib/` com `supabase/server.ts` (createServerComponentClient/createRouteHandlerClient) e `organizations.ts` (getActiveOrganizationForUser).
+- `types/database.ts` com schema Supabase.
 
 ## Padrões de API (Next.js)
-- Formato de sucesso: `{"success": true, "data": {}, "error": null}`.
-- Formato de erro: `{"success": false, "data": null, "error": {"code": "...", "message": "..."}}`.
+- Formato de sucesso: `{"success": true, "data": ...}`.
+- Formato de erro: `{"success": false, "error": {"code": "...", "message": "...", "details"?: {...}}}`.
 - Rotas principais:
-  - `/api/clients`: GET (listar, `search`), POST (criar), PUT `/api/clients/:id`, DELETE `/api/clients/:id`.
-  - `/api/projects`: GET (query `client_id`, `status`), POST (criar), GET `/api/projects/:id`, PUT `/api/projects/:id`, POST `/api/projects/:id/archive`.
-  - `/api/tasks`: GET com `project_id`, `visibility`; POST (criar com `assignees`); PUT `/api/tasks/:id`; POST `/api/tasks/:id/status`; POST `/api/tasks/:id/{archive|restore|trash}`.
-  - `/api/task-logs`: GET com `task_id`.
-- Erros padronizados: `VALIDATION_ERROR`, `UNAUTHORIZED`, `FORBIDDEN`, `INTERNAL_ERROR`.
+  - `/api/clients` (+ `/api/clients/:id`).
+  - `/api/projects` (+ `/api/projects/:id`, `/api/projects/:id/members`, `/api/projects/:id/members/:userId`).
+  - `/api/tasks` (+ `/api/tasks/:id`, `/api/tasks/:id/status`, `/api/tasks/:id/{archive|restore|trash}`).
+  - `/api/task-logs` (query `task_id`).
+- Erros padronizados: `VALIDATION_ERROR`, `UNAUTHORIZED`, `FORBIDDEN`, `NOT_FOUND`, `DB_ERROR`, `INTERNAL_ERROR`.
 
 ## Modelagem de dados (Supabase)
-- Tabelas principais: `profiles`, `organizations`, `organization_members`, `clients`, `projects`, `project_members`, `tasks`, `task_assignees`, `task_activity_log`.
-- Status de tarefas: execução `to_start | in_progress | pending | done`; visibilidade `published | archived | trashed`.
+- Tabelas: `profiles`, `organizations`, `organization_members`, `clients`, `projects`, `project_members`, `tasks`, `task_assignees`, `task_activity_log`.
+- Status/visibilidade de tarefas: `to_start | in_progress | pending | done`; visibilidade `published | archived | trashed`.
 - Relacionamentos-chave:
-  - `organizations` ↔ `organization_members` (isolamento por membership).
-  - `clients` pertencem a `organizations` (incluem `cnpj` e `address`).
-  - `projects` pertencem a `clients` e `organizations`; acesso também via `project_members`.
-  - `tasks` pertencem a `projects`; responsáveis em `task_assignees`; histórico em `task_activity_log`.
+  - Organização → clients/projects/members.
+  - Projects pertencem à organização e client; acesso por `project_members` (criador entra como `owner`).
+  - Tasks pertencem ao projeto; assignees em `task_assignees` (membros do projeto); logs em `task_activity_log` (campo `action_type`).
 
 ## Segurança e RLS
 - RLS habilitado em todas as tabelas do domínio; nenhuma consulta anônima.
