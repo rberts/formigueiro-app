@@ -6,6 +6,8 @@ type Client = {
   name: string;
   email: string | null;
   phone: string | null;
+  cnpj: string | null;
+  address: string | null;
   created_at: string;
 };
 
@@ -66,6 +68,8 @@ const ClientsPage = async () => {
                     <th className="px-4 py-3">Nome</th>
                     <th className="px-4 py-3">E-mail</th>
                     <th className="px-4 py-3">Telefone</th>
+                    <th className="px-4 py-3">CNPJ</th>
+                    <th className="px-4 py-3">Endereço</th>
                     <th className="px-4 py-3">Criado em</th>
                   </tr>
                 </thead>
@@ -75,6 +79,8 @@ const ClientsPage = async () => {
                       <td className="px-4 py-3 font-medium text-slate-100">{client.name}</td>
                       <td className="px-4 py-3 text-slate-300">{client.email ?? '—'}</td>
                       <td className="px-4 py-3 text-slate-300">{client.phone ?? '—'}</td>
+                      <td className="px-4 py-3 text-slate-300">{client.cnpj ?? '—'}</td>
+                      <td className="px-4 py-3 text-slate-300">{client.address ?? '—'}</td>
                       <td className="px-4 py-3 text-slate-400">
                         {client.created_at ? new Date(client.created_at).toLocaleDateString() : '—'}
                       </td>

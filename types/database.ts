@@ -89,6 +89,8 @@ export interface Database {
           contact_name: string | null;
           contact_email: string | null;
           contact_phone: string | null;
+          cnpj: string | null;
+          address: string | null;
           notes: string | null;
           created_by: string;
           created_at: string;
@@ -101,6 +103,8 @@ export interface Database {
           contact_name?: string | null;
           contact_email?: string | null;
           contact_phone?: string | null;
+          cnpj?: string | null;
+          address?: string | null;
           notes?: string | null;
           created_by: string;
           created_at?: string;
@@ -113,6 +117,8 @@ export interface Database {
           contact_name?: string | null;
           contact_email?: string | null;
           contact_phone?: string | null;
+          cnpj?: string | null;
+          address?: string | null;
           notes?: string | null;
           created_by?: string;
           created_at?: string;

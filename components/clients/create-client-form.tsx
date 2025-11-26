@@ -14,6 +14,8 @@ const CreateClientForm = () => {
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [phone, setPhone] = useState('');
+  const [cnpj, setCnpj] = useState('');
+  const [address, setAddress] = useState('');
 
   const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -28,7 +30,13 @@ const CreateClientForm = () => {
       const response = await fetch('/api/clients', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ name: name.trim(), email: email.trim() || undefined, phone: phone.trim() || undefined })
+        body: JSON.stringify({
+          name: name.trim(),
+          email: email.trim() || undefined,
+          phone: phone.trim() || undefined,
+          cnpj: cnpj.trim() || undefined,
+          address: address.trim() || undefined
+        })
       });
 
       const data = (await response.json()) as ApiResponse<{ id: string }>;
@@ -42,6 +50,8 @@ const CreateClientForm = () => {
       setName('');
       setEmail('');
       setPhone('');
+      setCnpj('');
+      setAddress('');
       router.refresh();
     });
   };
@@ -64,6 +74,14 @@ const CreateClientForm = () => {
           <div className="space-y-2">
             <Label htmlFor="phone">Telefone</Label>
             <Input id="phone" name="phone" value={phone} onChange={(e) => setPhone(e.target.value)} placeholder="+55..." />
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="cnpj">CNPJ</Label>
+            <Input id="cnpj" name="cnpj" value={cnpj} onChange={(e) => setCnpj(e.target.value)} placeholder="00.000.000/0000-00" />
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="address">Endereço</Label>
+            <Input id="address" name="address" value={address} onChange={(e) => setAddress(e.target.value)} placeholder="Rua, número, cidade" />
           </div>
           {error ? <p className="text-sm text-red-400">{error}</p> : null}
           <Button type="submit" className="w-full" disabled={isPending}>

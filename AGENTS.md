@@ -30,7 +30,7 @@
 - Status de tarefas: execução `to_start | in_progress | pending | done`; visibilidade `published | archived | trashed`.
 - Relacionamentos-chave:
   - `organizations` ↔ `organization_members` (isolamento por membership).
-  - `clients` pertencem a `organizations`.
+  - `clients` pertencem a `organizations` (incluem `cnpj` e `address`).
   - `projects` pertencem a `clients` e `organizations`; acesso também via `project_members`.
   - `tasks` pertencem a `projects`; responsáveis em `task_assignees`; histórico em `task_activity_log`.
 

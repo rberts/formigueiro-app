@@ -34,7 +34,7 @@ export async function GET(): Promise<NextResponse<ApiSuccess<unknown> | ApiError
   const { data, error } = await supabase
     .from('clients')
     // Aliases para manter payload compatível com o front, usando campos reais da tabela.
-    .select('id, name, email:contact_email, phone:contact_phone, created_at')
+    .select('id, name, email:contact_email, phone:contact_phone, cnpj, address, created_at')
     .eq('organization_id', organization.id);
 
   if (error) {
@@ -68,7 +68,7 @@ export async function POST(request: Request): Promise<NextResponse<ApiSuccess<un
     return badRequest('Nenhuma organização ativa encontrada para este usuário.');
   }
 
-  let body: { name?: string; email?: string; phone?: string };
+  let body: { name?: string; email?: string; phone?: string; cnpj?: string; address?: string };
   try {
     body = await request.json();
   } catch {
@@ -86,9 +86,12 @@ export async function POST(request: Request): Promise<NextResponse<ApiSuccess<un
       organization_id: organization.id,
       name,
       contact_email: body.email ?? null,
-      contact_phone: body.phone ?? null
+      contact_phone: body.phone ?? null,
+      created_by: userData.user.id,
+      cnpj: body.cnpj ?? null,
+      address: body.address ?? null
     })
-    .select('id, name, email:contact_email, phone:contact_phone, created_at')
+    .select('id, name, email:contact_email, phone:contact_phone, cnpj, address, created_at')
     .single();
 
   if (error) {

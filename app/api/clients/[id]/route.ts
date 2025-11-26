@@ -38,7 +38,7 @@ export async function GET(_: Request, { params }: RouteContext): Promise<NextRes
 
   const { data, error } = await supabase
     .from('clients')
-    .select('id, name, email, phone, created_at')
+    .select('id, name, email:contact_email, phone:contact_phone, cnpj, address, created_at')
     .eq('id', params.id)
     .eq('organization_id', organization.id)
     .maybeSingle();
@@ -67,7 +67,7 @@ export async function PUT(request: Request, { params }: RouteContext): Promise<N
     return badRequest('Nenhuma organização ativa encontrada para este usuário.');
   }
 
-  let body: { name?: string; email?: string; phone?: string };
+  let body: { name?: string; email?: string; phone?: string; cnpj?: string; address?: string };
   try {
     body = await request.json();
   } catch {
@@ -78,12 +78,14 @@ export async function PUT(request: Request, { params }: RouteContext): Promise<N
     .from('clients')
     .update({
       name: body.name ?? undefined,
-      email: body.email ?? undefined,
-      phone: body.phone ?? undefined
+      contact_email: body.email ?? undefined,
+      contact_phone: body.phone ?? undefined,
+      cnpj: body.cnpj ?? undefined,
+      address: body.address ?? undefined
     })
     .eq('id', params.id)
     .eq('organization_id', organization.id)
-    .select('id, name, email, phone, created_at')
+    .select('id, name, email:contact_email, phone:contact_phone, cnpj, address, created_at')
     .maybeSingle();
 
   if (error) {

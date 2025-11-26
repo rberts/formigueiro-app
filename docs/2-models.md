@@ -86,6 +86,8 @@ Clientes pertencentes a uma organização.
 | id             | uuid        | PK                                      |
 | organization_id| uuid        | FK → `organizations.id`                 |
 | name           | text        | Nome do cliente                         |
+| cnpj           | text        | CNPJ do cliente                         |
+| address        | text        | Endereço completo do cliente            |
 | contact_name   | text        | Nome do contato principal               |
 | contact_email  | text        | E-mail do contato                       |
 | contact_phone  | text        | Telefone do contato                     |
