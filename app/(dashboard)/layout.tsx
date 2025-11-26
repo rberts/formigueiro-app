@@ -1,11 +1,11 @@
 import type { ReactNode } from 'react';
 import { redirect } from 'next/navigation';
 import AppShell from '../../components/layout/app-shell';
-import { createServerClient } from '../../lib/supabase/server';
+import { createServerComponentClient } from '../../lib/supabase/server';
 import { getActiveOrganizationForUser } from '../../lib/organizations';
 
 const DashboardLayout = async ({ children }: { children: ReactNode }) => {
-  const supabase = createServerClient();
+  const supabase = createServerComponentClient();
   const { data: userData } = await supabase.auth.getUser();
   const user = userData.user;
 

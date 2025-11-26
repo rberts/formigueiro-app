@@ -1,10 +1,12 @@
-import { createServerClient } from '@/lib/supabase/server';
+import type { SupabaseClient } from '@supabase/supabase-js';
+import { createServerComponentClient } from '@/lib/supabase/server';
 import type { Database } from '@/types/database';
 
 export const getActiveOrganizationForUser = async (
-  userId: string
+  userId: string,
+  client?: SupabaseClient<Database>
 ): Promise<Database['public']['Tables']['organizations']['Row'] | null> => {
-  const supabase = createServerClient();
+  const supabase = client ?? createServerComponentClient();
 
   const { data: membership, error: membershipError } = await supabase
     .from('organization_members')

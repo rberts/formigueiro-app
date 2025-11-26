@@ -1,8 +1,8 @@
-import { createServerClient } from '../../lib/supabase/server';
+import { createServerComponentClient } from '../../lib/supabase/server';
 import { getActiveOrganizationForUser } from '../../lib/organizations';
 
 const DashboardPage = async () => {
-  const supabase = createServerClient();
+  const supabase = createServerComponentClient();
   const { data: userData } = await supabase.auth.getUser();
   const user = userData.user;
 

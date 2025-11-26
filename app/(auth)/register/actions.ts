@@ -1,7 +1,7 @@
 'use server';
 
 import { redirect } from 'next/navigation';
-import { createServerClient } from '@/lib/supabase/server';
+import { createRouteHandlerClient } from '@/lib/supabase/server';
 
 type RegisterActionResult = { error?: string };
 
@@ -15,7 +15,7 @@ export const registerAction = async (formData: FormData): Promise<RegisterAction
     return { error: 'Preencha todos os campos.' };
   }
 
-  const supabase = createServerClient();
+  const supabase = createRouteHandlerClient();
 
   const { data: signUpData, error: signUpError } = await supabase.auth.signUp({ email, password });
   if (signUpError || !signUpData.user) {
