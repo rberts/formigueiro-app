@@ -13,6 +13,12 @@ const DashboardLayout = async ({ children }: { children: ReactNode }) => {
     redirect('/login');
   }
 
+  const { data: profileData } = await supabase
+    .from('profiles')
+    .select('full_name')
+    .eq('id', user.id)
+    .maybeSingle();
+
   const organization = await getActiveOrganizationForUser(user.id);
 
   if (!organization) {
@@ -29,7 +35,11 @@ const DashboardLayout = async ({ children }: { children: ReactNode }) => {
   }
 
   return (
-    <AppShell user={user} organization={organization}>
+    <AppShell
+      user={user}
+      organization={organization}
+      userName={profileData?.full_name ?? undefined}
+    >
       {children}
     </AppShell>
   );

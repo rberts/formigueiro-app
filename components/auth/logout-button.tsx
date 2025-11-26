@@ -14,7 +14,14 @@ const LogoutButton = () => {
   };
 
   return (
-    <Button variant="outline" size="sm" type="button" onClick={handleLogout} disabled={isPending}>
+    <Button
+      variant="ghost"
+      size="sm"
+      type="button"
+      onClick={handleLogout}
+      disabled={isPending}
+      className="px-2 text-xs font-semibold uppercase tracking-wide text-primary-300 hover:text-primary-200"
+    >
       {isPending ? 'Saindo...' : 'Sair'}
     </Button>
   );
