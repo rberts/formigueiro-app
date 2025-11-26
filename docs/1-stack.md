@@ -80,9 +80,9 @@ A aplicação utiliza o Supabase como serviço de:
 Padrões de uso:
 
 - Cliente **server-side** configurado em:
-  - `lib/supabase/client-server.ts`
+  - `lib/supabase/server.ts`
 - Cliente **browser** (somente se necessário) em:
-  - `lib/supabase/client-browser.ts`
+  - `lib/supabase/client.ts`
 - Toda comunicação com o banco deve utilizar o Supabase Client.
 
 ---
@@ -120,8 +120,8 @@ src/
 
   lib/
     supabase/
-      client-server.ts
-      client-browser.ts
+      server.ts
+      client.ts
     utils/
     validators/
 

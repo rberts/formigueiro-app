@@ -12,7 +12,7 @@
 - `app/` com `layout.tsx`, `page.tsx`, rotas (incluindo `(auth)/login`, `(auth)/register`, `dashboard/`).
 - `app/api/*/route.ts` para handlers REST (GET/POST/PUT/PATCH/DELETE).
 - `components/` dividido em `ui/`, `layout/`, `forms/`, `shared/`.
-- `lib/` com `supabase/` (`client-server.ts`, `client-browser.ts`), `utils/`, `validators/`.
+- `lib/` com `supabase/` (`server.ts`, `client.ts`), `utils/`, `validators/`.
 - `styles/` com `globals.css`, `tailwind.css`.
 
 ## Padrões de API (Next.js)
@@ -42,8 +42,8 @@
 - Logs (`task_activity_log`) guardam `user_id` para auditoria.
 
 ## Supabase clients
-- Uso server-side preferencial via `lib/supabase/client-server.ts`.
-- Cliente browser (`lib/supabase/client-browser.ts`) só quando realmente necessário.
+- Uso server-side preferencial via `lib/supabase/server.ts`.
+- Cliente browser (`lib/supabase/client.ts`) só quando realmente necessário.
 - Nenhum segredo exposto ao cliente; lógica de negócio fica no servidor.
 
 ## Convenções gerais de desenvolvimento
