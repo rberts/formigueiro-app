@@ -1,40 +1,31 @@
 import type { ReactNode } from 'react';
 import { redirect } from 'next/navigation';
 import AppShell from '../../components/layout/app-shell';
-import { createServerClient, getUser } from '../../lib/supabase/server';
+import { createServerClient } from '../../lib/supabase/server';
+import { getActiveOrganizationForUser } from '../../lib/organizations';
 
 const DashboardLayout = async ({ children }: { children: ReactNode }) => {
-  const user = await getUser();
+  const supabase = createServerClient();
+  const { data: userData } = await supabase.auth.getUser();
+  const user = userData.user;
+
   if (!user) {
     redirect('/login');
   }
 
-  const supabase = createServerClient();
+  const organization = await getActiveOrganizationForUser(user.id);
 
-  const { data: membership, error: membershipError } = await supabase
-    .from('organization_members')
-    .select('organization_id')
-    .eq('user_id', user.id)
-    .limit(1)
-    .maybeSingle();
-
-  if (membershipError) {
-    throw new Error('Falha ao carregar organização do usuário.');
-  }
-
-  const organizationId = membership?.organization_id;
-  if (!organizationId) {
-    redirect('/');
-  }
-
-  const { data: organization, error: organizationError } = await supabase
-    .from('organizations')
-    .select('*')
-    .eq('id', organizationId)
-    .single();
-
-  if (organizationError || !organization) {
-    throw new Error('Organização não encontrada para o usuário.');
+  if (!organization) {
+    return (
+      <main className="flex min-h-screen items-center justify-center bg-slate-950 px-6 text-center text-slate-200">
+        <div className="space-y-2">
+          <p className="text-xl font-semibold">Nenhuma organização encontrada</p>
+          <p className="text-slate-400">
+            Sua conta está sem organização ativa. Crie ou associe uma organização para continuar.
+          </p>
+        </div>
+      </main>
+    );
   }
 
   return (

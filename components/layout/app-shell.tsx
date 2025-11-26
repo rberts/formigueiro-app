@@ -12,11 +12,11 @@ export type AppShellProps = {
   organization?: Organization | null;
 };
 
-const AppShell = ({ children, user: _user, organization: _organization }: AppShellProps) => (
+const AppShell = ({ children, user, organization }: AppShellProps) => (
   <div className="flex min-h-screen bg-slate-950 text-slate-50">
-    <AppSidebar />
+    <AppSidebar organizationName={organization?.name} />
     <div className="flex flex-1 flex-col">
-      <AppHeader />
+      <AppHeader organizationName={organization?.name} userEmail={user?.email ?? undefined} />
       <main className="flex-1 bg-slate-950 p-8">{children}</main>
     </div>
   </div>

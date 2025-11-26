@@ -12,7 +12,11 @@ const navItems = [
   { href: '/settings', label: 'Configurações' }
 ];
 
-const AppSidebar = () => {
+type AppSidebarProps = {
+  organizationName?: string;
+};
+
+const AppSidebar = ({ organizationName }: AppSidebarProps) => {
   const pathname = usePathname();
 
   return (
@@ -20,20 +24,25 @@ const AppSidebar = () => {
       <div className="mb-8 space-y-1">
         <p className="text-xs uppercase tracking-[0.3em] text-primary-300">Formigueiro</p>
         <p className="text-lg font-semibold text-slate-100">Painel</p>
+        {organizationName ? <p className="text-xs text-slate-400">Org: {organizationName}</p> : null}
       </div>
       <nav className="space-y-1">
-        {navItems.map((item) => (
-          <Link
-            key={item.href}
-            href={item.href}
-            className={cn(
-              'flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium text-slate-200 transition hover:bg-slate-800',
-              pathname?.startsWith(item.href) && 'bg-slate-800 text-white'
-            )}
-          >
-            {item.label}
-          </Link>
-        ))}
+        {navItems.map((item) => {
+          const isActive =
+            item.href === '/' ? pathname === '/' : pathname?.startsWith(item.href);
+          return (
+            <Link
+              key={item.href}
+              href={item.href}
+              className={cn(
+                'flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium text-slate-200 transition hover:bg-slate-800',
+                isActive && 'bg-slate-800 text-white'
+              )}
+            >
+              {item.label}
+            </Link>
+          );
+        })}
       </nav>
     </aside>
   );
