@@ -2,10 +2,10 @@ import { cookies } from 'next/headers';
 import { createServerComponentClient } from '@/lib/supabase/server';
 import { getActiveOrganizationForUser } from '@/lib/organizations';
 import type { Database } from '@/types/database';
+import type { TaskWithAssignees } from '@/types/tasks';
 import CreateTaskForm from './create-task-form';
 import AddProjectMemberForm from './add-project-member-form';
-import TaskStatusControls from './task-status-controls';
-import TaskHistory from './task-history';
+import TaskListClient from './task-list-client';
 
 type Project = {
   id: string;
@@ -15,19 +15,6 @@ type Project = {
   due_date: string | null;
   description: string | null;
   organization_id?: string;
-};
-
-type Task = {
-  id: string;
-  project_id: string;
-  title: string;
-  description: string | null;
-  status: string;
-  visibility: string;
-  start_date: string | null;
-  due_date: string | null;
-  created_at: string;
-  updated_at: string;
 };
 
 type ProjectMember = {
@@ -41,7 +28,7 @@ type ProjectResponse =
   | { success: true; data: Project }
   | { success: false; data: null; error: ApiError };
 type TasksResponse =
-  | { success: true; data: Task[] }
+  | { success: true; data: TaskWithAssignees[] }
   | { success: false; data: null; error: ApiError };
 
 const buildApiUrl = (path: string) => {
@@ -114,7 +101,10 @@ const ProjectDetailsPage = async ({ params }: { params: { id: string } }) => {
 
   const tasksResponse = await fetchTasks(params.id);
   const isTasksError = 'success' in tasksResponse && tasksResponse.success === false;
-  const tasks: Task[] = !isTasksError ? (tasksResponse as { success: true; data: Task[] }).data : [];
+  const tasks: TaskWithAssignees[] = !isTasksError
+    ? (tasksResponse as { success: true; data: TaskWithAssignees[] }).data
+    : [];
+  const publishedTasks = tasks.filter((task) => task.visibility === 'published');
   const projectMembers: ProjectMember[] =
     membersError || !membersData
       ? []
@@ -200,37 +190,8 @@ const ProjectDetailsPage = async ({ params }: { params: { id: string } }) => {
             <div className="rounded-xl border border-red-700/60 bg-red-950/40 px-4 py-3 text-sm text-red-200">
               {(tasksResponse as { success: false; error: ApiError }).error.message || 'Erro ao carregar tarefas.'}
             </div>
-          ) : tasks.length === 0 ? (
-            <div className="rounded-xl border border-slate-800 bg-slate-900/60 px-4 py-3 text-sm text-slate-300">
-              Nenhuma tarefa cadastrada para este projeto ainda.
-            </div>
           ) : (
-            <div className="space-y-3">
-              {tasks.map((task) => (
-                <div
-                  key={task.id}
-                  className="rounded-lg border border-slate-800 bg-slate-900/60 px-4 py-3 shadow-sm transition hover:border-slate-700"
-                >
-                  <div className="flex items-start justify-between gap-3">
-                    <div>
-                      <p className="text-sm font-medium text-slate-100">{task.title}</p>
-                      {task.description ? <p className="text-sm text-slate-300">{task.description}</p> : null}
-                      <p className="text-xs text-slate-400">
-                        {task.start_date ? `Início: ${new Date(task.start_date).toLocaleDateString()} • ` : ''}
-                        {task.due_date ? `Prazo: ${new Date(task.due_date).toLocaleDateString()}` : ''}
-                      </p>
-                    </div>
-                    <span className="rounded-full bg-slate-800 px-3 py-1 text-xs font-medium text-slate-200">
-                      {task.status}
-                    </span>
-                  </div>
-                  <div className="mt-3 flex flex-wrap gap-3">
-                    <TaskStatusControls taskId={task.id} currentStatus={task.status as any} currentVisibility={task.visibility as any} />
-                    <TaskHistory taskId={task.id} taskTitle={task.title} />
-                  </div>
-                </div>
-              ))}
-            </div>
+            <TaskListClient initialTasks={publishedTasks} />
           )}
         </div>
 
