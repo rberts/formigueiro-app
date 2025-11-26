@@ -4,6 +4,8 @@ import { getActiveOrganizationForUser } from '@/lib/organizations';
 import type { Database } from '@/types/database';
 import CreateTaskForm from './create-task-form';
 import AddProjectMemberForm from './add-project-member-form';
+import TaskStatusControls from './task-status-controls';
+import TaskHistory from './task-history';
 
 type Project = {
   id: string;
@@ -221,6 +223,10 @@ const ProjectDetailsPage = async ({ params }: { params: { id: string } }) => {
                     <span className="rounded-full bg-slate-800 px-3 py-1 text-xs font-medium text-slate-200">
                       {task.status}
                     </span>
+                  </div>
+                  <div className="mt-3 flex flex-wrap gap-3">
+                    <TaskStatusControls taskId={task.id} currentStatus={task.status as any} currentVisibility={task.visibility as any} />
+                    <TaskHistory taskId={task.id} taskTitle={task.title} />
                   </div>
                 </div>
               ))}
