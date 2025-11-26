@@ -1,4 +1,4 @@
-import { NextResponse } from 'next/server';
+import { NextResponse, type NextResponseInit } from 'next/server';
 
 export type ApiSuccess<T> = {
   success: true;
@@ -14,10 +14,15 @@ export type ApiError = {
   };
 };
 
-export const successResponse = <T>(data: T, init?: ResponseInit): NextResponse<ApiSuccess<T>> =>
+export const successResponse = <T>(data: T, init?: NextResponseInit): NextResponse<ApiSuccess<T>> =>
   NextResponse.json({ success: true, data }, init);
 
-export const errorResponse = (code: string, message: string, details?: unknown, init?: ResponseInit): NextResponse<ApiError> =>
+export const errorResponse = (
+  code: string,
+  message: string,
+  details?: unknown,
+  init?: NextResponseInit
+): NextResponse<ApiError> =>
   NextResponse.json({ success: false, error: { code, message, details } }, init);
 
 export type SafeAction<T> = () => Promise<T>;

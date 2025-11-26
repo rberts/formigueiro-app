@@ -24,9 +24,6 @@ type ProjectMember = {
 };
 
 type ApiError = { code: string; message: string; details?: unknown };
-type ProjectResponse =
-  | { success: true; data: Project }
-  | { success: false; data: null; error: ApiError };
 type TasksResponse =
   | { success: true; data: TaskWithAssignees[] }
   | { success: false; data: null; error: ApiError };

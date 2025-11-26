@@ -5,7 +5,7 @@ import type { TaskWithAssignees } from "@/types/tasks";
 
 type TaskListProps = {
   tasks: TaskWithAssignees[];
-  onTaskClick?: (task: TaskWithAssignees) => void;
+  onTaskClick?: (_task: TaskWithAssignees) => void;
 };
 
 const TaskList = ({ tasks, onTaskClick }: TaskListProps) => {

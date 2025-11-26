@@ -1,4 +1,4 @@
-import { NextResponse } from 'next/server';
+import { NextResponse, type NextResponseInit } from 'next/server';
 import { createRouteHandlerClient } from '@/lib/supabase/server';
 import { getActiveOrganizationForUser } from '@/lib/organizations';
 
@@ -6,7 +6,7 @@ type ApiErrorCode = 'VALIDATION_ERROR' | 'UNAUTHORIZED' | 'FORBIDDEN' | 'NOT_FOU
 type ApiSuccess<T> = { success: true; data: T; error: null };
 type ApiErrorResponse = { success: false; error: { code: ApiErrorCode; message: string; details?: unknown }; data: null };
 
-const successResponse = <T>(data: T, init?: ResponseInit) =>
+const successResponse = <T>(data: T, init?: NextResponseInit) =>
   NextResponse.json({ success: true, data, error: null } satisfies ApiSuccess<T>, init);
 
 const errorResponse = (code: ApiErrorCode, message: string, status: number, details?: unknown) =>

@@ -1,4 +1,4 @@
-import { NextResponse } from 'next/server';
+import { NextResponse, type NextResponseInit } from 'next/server';
 import { createRouteHandlerClient } from '@/lib/supabase/server';
 import { getActiveOrganizationForUser } from '@/lib/organizations';
 
@@ -8,7 +8,7 @@ type ApiErrorResponse = { success: false; error: { code: ApiErrorCode; message: 
 
 type RouteContext = { params: { id: string; userId: string } };
 
-const successResponse = <T>(data: T, init?: ResponseInit) =>
+const successResponse = <T>(data: T, init?: NextResponseInit) =>
   NextResponse.json({ success: true, data } satisfies ApiSuccess<T>, init);
 
 const errorResponse = (code: ApiErrorCode, message: string, status: number, details?: unknown) =>

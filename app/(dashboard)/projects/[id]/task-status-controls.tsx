@@ -2,7 +2,7 @@
 
 import { useState, useTransition } from 'react';
 import { useRouter } from 'next/navigation';
-import { Button, Input, Label } from '@/components/ui';
+import { Button, Label } from '@/components/ui';
 
 type ApiError = { code: string; message: string; details?: unknown };
 type ApiResponse<T> = { success: true; data: T; error: null } | { success: false; data: null; error: ApiError };
