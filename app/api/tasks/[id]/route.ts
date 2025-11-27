@@ -13,6 +13,9 @@ type TaskStatus = Database['public']['Tables']['tasks']['Row']['status'];
 type TaskVisibility = Database['public']['Tables']['tasks']['Row']['visibility'];
 type TaskUpdate = Database['public']['Tables']['tasks']['Update'];
 type TaskAssigneeRow = Database['public']['Tables']['task_assignees']['Row'];
+type TaskLogInsert = Database['public']['Tables']['task_activity_log']['Insert'] & {
+  action_type?: string;
+};
 
 const successResponse = <T>(data: T, init?: NextResponseInit) =>
   NextResponse.json({ success: true, data, error: null } satisfies ApiSuccess<T>, init);
@@ -207,6 +210,26 @@ export async function PUT(
 
   if (!data) {
     return errorResponse('NOT_FOUND', 'Tarefa não encontrada para a organização ativa.', 404);
+  }
+
+  const shouldLogStatusChange = body.status !== undefined && body.status !== taskWithProject.status;
+  const shouldLogDueDateChange = body.due_date !== undefined && body.due_date !== taskWithProject.due_date;
+
+  if (shouldLogStatusChange || shouldLogDueDateChange) {
+    const logPayload: TaskLogInsert = {
+      task_id: params.id,
+      user_id: userData.user.id,
+      action_type: shouldLogStatusChange ? 'STATUS_CHANGED' : 'UPDATED',
+      from_status: taskWithProject.status,
+      to_status: body.status ?? taskWithProject.status,
+      from_due_date: taskWithProject.due_date ?? null,
+      to_due_date: body.due_date ?? taskWithProject.due_date ?? null
+    };
+
+    const { error: logError } = await supabase.from('task_activity_log').insert(logPayload);
+    if (logError) {
+      console.error('[TASK ACTIVITY LOG ERROR]', logError);
+    }
   }
 
   if (normalizedAssigneeId !== undefined) {

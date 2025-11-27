@@ -1,7 +1,7 @@
 "use client";
 /* eslint-disable no-unused-vars */
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import TaskAssigneesList from "@/components/tasks/task-assignees-list";
 import TaskDueIndicator from "@/components/tasks/task-due-indicator";
 import TaskStatusBadge from "@/components/tasks/task-status-badge";
@@ -30,9 +30,15 @@ type TaskDetailsProps = {
 
 const TaskDetails = ({ task, open, onOpenChange, onTaskUpdated, assigneeOptions }: TaskDetailsProps) => {
   const [editMode, setEditMode] = useState(false);
+  const [historyRefreshToken, setHistoryRefreshToken] = useState(0);
+
+  useEffect(() => {
+    setHistoryRefreshToken((prev) => prev + 1);
+  }, [task?.id]);
 
   const handleSaved = (updated: TaskWithAssignees) => {
     onTaskUpdated?.(updated);
+    setHistoryRefreshToken((prev) => prev + 1);
     setEditMode(false);
   };
 
@@ -106,7 +112,12 @@ const TaskDetails = ({ task, open, onOpenChange, onTaskUpdated, assigneeOptions 
                   Histórico de atividades
                 </p>
               </div>
-              <TaskHistory taskId={task.id} taskTitle={task.title} inline />
+              <TaskHistory
+                taskId={task.id}
+                taskTitle={task.title}
+                inline
+                refreshToken={historyRefreshToken}
+              />
             </div>
           </div>
         )}

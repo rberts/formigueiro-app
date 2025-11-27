@@ -24,16 +24,19 @@ type ApiResponse =
 type TaskHistoryProps = {
   taskId: string;
   inline?: boolean;
+  refreshToken?: string | number;
+  taskTitle?: string;
 };
 
 const actionLabels: Record<string, string> = {
   STATUS_CHANGED: 'Status alterado',
+  UPDATED: 'Atualizado',
   ARCHIVED: 'Tarefa arquivada',
   RESTORED: 'Tarefa restaurada',
   TRASHED: 'Tarefa movida para lixeira'
 };
 
-const TaskHistory = ({ taskId, inline = false }: TaskHistoryProps) => {
+const TaskHistory = ({ taskId, inline = false, refreshToken }: TaskHistoryProps) => {
   const [logs, setLogs] = useState<LogRecord[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -63,7 +66,7 @@ const TaskHistory = ({ taskId, inline = false }: TaskHistoryProps) => {
       }
     };
     fetchLogs();
-  }, [inline, taskId]);
+  }, [inline, taskId, refreshToken]);
 
   if (!inline) {
     return null;
