@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import TaskList from "@/components/tasks/task-list";
+import TaskDetailsDrawer from "@/components/tasks/task-details-drawer";
 import TaskFiltersDrawer from "@/components/tasks/task-filters-drawer";
 import TaskSortSelect from "@/components/tasks/task-sort-select";
 import { Button } from "@/components/ui/button";
@@ -15,7 +16,6 @@ import {
   type TaskSortOption,
 } from "@/lib/tasks-filters";
 import type { TaskWithAssignees } from "@/types/tasks";
-import TaskDetails from "./task-details";
 
 type TaskListClientProps = {
   initialTasks: TaskWithAssignees[];
@@ -33,13 +33,14 @@ const TaskListClient = ({ initialTasks, assigneeOptions }: TaskListClientProps) 
 
   const { filters: initialFilters, sort: initialSort } = parseFiltersFromSearchParams(searchParams);
 
-  const [tasks, setTasks] = useState<TaskWithAssignees[]>(() =>
+  const [tasks] = useState<TaskWithAssignees[]>(() =>
     initialTasks.filter((task) => task.visibility === "published")
   );
   const [filters, setFilters] = useState<TaskFiltersState>(initialFilters);
   const [sort, setSort] = useState<TaskSortOption>(initialSort);
   const [isFiltersOpen, setIsFiltersOpen] = useState(false);
   const [selectedTask, setSelectedTask] = useState<TaskWithAssignees | null>(null);
+  const [isDetailsOpen, setIsDetailsOpen] = useState(false);
 
   useEffect(() => {
     const next = buildSearchParamsFromState(
@@ -69,24 +70,6 @@ const TaskListClient = ({ initialTasks, assigneeOptions }: TaskListClientProps) 
       .sort((a, b) => a.name.localeCompare(b.name));
   }, [assigneeOptions, tasks]);
 
-  const handleTaskClick = (task: TaskWithAssignees) => {
-    setSelectedTask(task);
-  };
-
-  const handleTaskUpdated = (updated: TaskWithAssignees) => {
-    setTasks((prev) => {
-      const next = prev
-        .map((task) => (task.id === updated.id ? { ...task, ...updated } : task))
-        .filter((task) => task.visibility === "published");
-      return next;
-    });
-    setSelectedTask((current) => {
-      if (!current || current.id !== updated.id) return current;
-      if (updated.visibility !== "published") return null;
-      return { ...current, ...updated };
-    });
-  };
-
   return (
     <>
       <div className="mb-4 flex flex-wrap items-center gap-2">
@@ -96,7 +79,13 @@ const TaskListClient = ({ initialTasks, assigneeOptions }: TaskListClientProps) 
         </Button>
       </div>
 
-      <TaskList tasks={filteredAndSorted} onTaskClick={handleTaskClick} />
+      <TaskList
+        tasks={filteredAndSorted}
+        onTaskClick={(task) => {
+          setSelectedTask(task);
+          setIsDetailsOpen(true);
+        }}
+      />
 
       <TaskFiltersDrawer
         open={isFiltersOpen}
@@ -106,14 +95,15 @@ const TaskListClient = ({ initialTasks, assigneeOptions }: TaskListClientProps) 
         assigneeOptions={computedAssignees}
       />
 
-      <TaskDetails
-        task={selectedTask}
-        open={Boolean(selectedTask)}
+      <TaskDetailsDrawer
+        open={isDetailsOpen}
         onOpenChange={(open) => {
-          if (!open) setSelectedTask(null);
+          setIsDetailsOpen(open);
+          if (!open) {
+            setSelectedTask(null);
+          }
         }}
-        onTaskUpdated={handleTaskUpdated}
-        assigneeOptions={assigneeOptions}
+        task={selectedTask}
       />
     </>
   );
