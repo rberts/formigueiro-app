@@ -7,16 +7,6 @@ import CreateTaskForm from './create-task-form';
 import AddProjectMemberForm from './add-project-member-form';
 import TaskListClient from './task-list-client';
 
-type Project = {
-  id: string;
-  name: string;
-  status: string;
-  start_date: string | null;
-  due_date: string | null;
-  description: string | null;
-  organization_id?: string;
-};
-
 type ProjectMember = {
   id: string;
   name: string;
@@ -188,7 +178,14 @@ const ProjectDetailsPage = async ({ params }: { params: { id: string } }) => {
               {(tasksResponse as { success: false; error: ApiError }).error.message || 'Erro ao carregar tarefas.'}
             </div>
           ) : (
-            <TaskListClient initialTasks={publishedTasks} />
+            <TaskListClient
+              initialTasks={publishedTasks}
+              assigneeOptions={projectMembers.map((member) => ({
+                id: member.id,
+                full_name: member.name,
+                avatar_url: null
+              }))}
+            />
           )}
         </div>
 

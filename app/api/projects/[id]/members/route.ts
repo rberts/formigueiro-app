@@ -1,7 +1,6 @@
 import { NextResponse, type NextResponseInit } from 'next/server';
 import { createRouteHandlerClient } from '@/lib/supabase/server';
 import { getActiveOrganizationForUser } from '@/lib/organizations';
-import type { Database } from '@/types/database';
 
 type ApiErrorCode = 'VALIDATION_ERROR' | 'UNAUTHORIZED' | 'FORBIDDEN' | 'NOT_FOUND' | 'DB_ERROR';
 type ApiSuccess<T> = { success: true; data: T };

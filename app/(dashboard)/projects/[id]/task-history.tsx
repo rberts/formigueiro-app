@@ -23,7 +23,6 @@ type ApiResponse =
 
 type TaskHistoryProps = {
   taskId: string;
-  taskTitle?: string;
   inline?: boolean;
 };
 
@@ -34,14 +33,13 @@ const actionLabels: Record<string, string> = {
   TRASHED: 'Tarefa movida para lixeira'
 };
 
-const TaskHistory = ({ taskId, taskTitle, inline = false }: TaskHistoryProps) => {
-  const [open, setOpen] = useState(inline);
+const TaskHistory = ({ taskId, inline = false }: TaskHistoryProps) => {
   const [logs, setLogs] = useState<LogRecord[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    if (!open) return;
+    if (!inline) return;
     const fetchLogs = async () => {
       setLoading(true);
       setError(null);
@@ -65,7 +63,7 @@ const TaskHistory = ({ taskId, taskTitle, inline = false }: TaskHistoryProps) =>
       }
     };
     fetchLogs();
-  }, [open, taskId]);
+  }, [inline, taskId]);
 
   if (!inline) {
     return null;

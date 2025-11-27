@@ -1,11 +1,12 @@
 "use client";
+/* eslint-disable no-unused-vars */
 
 import TaskCard from "@/components/tasks/task-card";
 import type { TaskWithAssignees } from "@/types/tasks";
 
 type TaskListProps = {
   tasks: TaskWithAssignees[];
-  onTaskClick?: (_task: TaskWithAssignees) => void;
+  onTaskClick?: (task: TaskWithAssignees) => void;
 };
 
 const TaskList = ({ tasks, onTaskClick }: TaskListProps) => {
